@@ -1,7 +1,8 @@
 % Input displacement data Ux, Uy, and interpolant function UxF(x,y), UyF(x,y)
-% or p_xyz,{px_knot,py_knot}
+% or NURBS surface data p_xyz,{px_knot,py_knot}
 
 % Initialization
+load('Data/ini_nurbC_1015.mat');
 addpath(genpath('nurbs-1.3.7'));
 vol_ratio=0.6;  % fiber volume ratio
 f_length=0.35;
@@ -17,7 +18,6 @@ alignment_weight = 0.8; % 0.8
 cohesion_weight = 0.3; % 0.3
 fieldGrad_weight = 0.7; % 0.8, field 0.7
 p_field_weight = 1;
-delta_f=0.0001;
 
 min_speed=0.1;
 
@@ -124,12 +124,10 @@ for t = 1:300
         end
 
 %         velocities_tmp(i, :) = -separation_weight*separation + alignment_weight*alignment + cohesion_weight*cohesion + fieldGrad_weight*fieldGrad_n(i,:);
-%         velocities_tmp(i, :) = -separation_weight*separation + fieldGrad_weight*fieldGrad_p + p_field_weight*p_field;
         velocities_tmp(i, :) = -separation_weight*separation + fieldGrad_weight*fieldGrad_p;
     end
     
     velocities = velocities + velocities_tmp;
-%     velocities = (min_speed+(1-min_speed)*d_factor).*velocities;
     
     % limit speed
     norm_vel = sqrt(sum(velocities.^2,2));
@@ -158,8 +156,6 @@ for t = 1:300
                 positions_new(i,:) = [rand(1,1)*10,0.1];
                 velocities(i,:)=[0 0.5];
             end
-%             velocities(i,:) = [UxF(positions(i,:)),UyF(positions(i,:))];
-%             [~,tmp_grad]=nrbdeval (surface, dsurface, {positions(i,1)./10,positions(i,2)./15});
         end
     end
     positions=positions_new;
@@ -287,7 +283,3 @@ function [field,grad] = computeField(f_length, positions, velocities, p_end, cal
         field=[0,0];
     end
 end
-
-% function d=dis(a,b)
-% d=sqrt(a.^2 + b.^2);
-% end
