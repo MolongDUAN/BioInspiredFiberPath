@@ -1,25 +1,27 @@
 % Input displacement data Ux, Uy, and interpolant function UxF(x,y), UyF(x,y)
 % or NURBS surface data p_xyz,{px_knot,py_knot}
 
-% Initialization
+%% 0. Initialization
+% 0.1 Fiber
+% 0.2 Boundary
 load('Data/ini_nurbC_1015.mat');
 addpath(genpath('nurbs-1.3.7'));
-vol_ratio=0.6;  % fiber volume ratio
-f_length=0.35;
-f_width=0.35;
+vol_ratio=0.6;  % fiber volume ratio [%]
+f_length=0.35;  % fiber particle length [mm]
+f_width=0.35;   % fiber particle width [mm]
 part_area=150;
 % boundary function: fd / xy range, for rectangle case 0<=x<=10 0<=y<=15
 num_agents = ceil(part_area*vol_ratio/(f_length*f_width));   % particle #
-max_speed = 0.35;
-separation_radius = 0.6;   % searching radius 0.6
-cohesion_radius = 1.5; % 1.5
-separation_weight = 0.4; % 0.4
-alignment_weight = 0.8; % 0.8
-cohesion_weight = 0.3; % 0.3
-fieldGrad_weight = 0.7; % 0.8, field 0.7
+max_speed = 0.35;           % max particle movement speed [mm/iteration]
+separation_radius = 0.6;    % searching radius [mm], (0.6)
+cohesion_radius = 1.5;      % 1.5
+separation_weight = 0.4;    % 0.4
+alignment_weight = 0.8;     % 0.8
+cohesion_weight = 0.3;      % 0.3
+fieldGrad_weight = 0.7;     % 0.8, field 0.7
 p_field_weight = 1;
 
-min_speed=0.1;
+% min_speed=0.1;
 
 % Initial position, velocity, and energy field
 positions = [rand(num_agents,1)*10,rand(num_agents,1)*15];  % random position
