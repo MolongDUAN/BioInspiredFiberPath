@@ -1,0 +1,24 @@
+Summary of important user-visible changes for nurbs 1.3.7:
+-------------------------------------------------------------------
+
+ ** 1.3.7 is mainly a maintainance release to distribute small bug fixes 
+    that accumulated over time.
+
+ * inst/nrbpermute.m: added new function
+
+ * inst/nrbreverse.m: each direction can now be reversed independently
+
+ * inst/nrbkntplot.m: now works for non-unitary interval
+
+ * inst/nrbcrvderiveval: code vectorized 
+
+ * inst/nrbplot: fixed bug in affecting plot of trivariate nurbs, now works for 
+   non-unitary intervals 
+
+ * inst/nrbctrplot.m: plot the points only once
+
+ * src/*.cc: avoid use of deprecated array constructors
+
+
+ 
+ 
