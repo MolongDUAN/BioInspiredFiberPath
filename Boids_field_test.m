@@ -36,8 +36,20 @@ iteration_num = 300;
 % 0.5 Options
 GPU_flag=1;                 % 0 - off, 1 - on
 rule_flag=1;                % 0 - Boids, 1 - separation + field gradient
+plot_flag=0;                % 0 - no plot, 1 - plot field
+plot_iter=0;              % 0 - only plot initial field, other - plot field of that iteration
+plot_dis=0.02;              % the sampling point distance [mm]
 
 %% 1. Main
+% 1.0 Plot initial field
+if plot_flag
+    if rule_flag==1
+        FieldPlot(surface,plot_dis,boundary_box_x,boundary_box_y,[],[],[],[],[],[]);
+    else
+        print('Field is not used in the motion rule.');
+    end
+end
+
 p_result=cell(iteration_num,2); % Allocate the result store space
 tic;
 for t = 1:iteration_num
@@ -166,6 +178,13 @@ for t = 1:iteration_num
     end
     positions=positions_new;
     
+    % 1.5 Plot field of an iteration
+    if plot_flag
+        if plot_iter==t
+            FieldPlot(surface,plot_dis,boundary_box_x,boundary_box_y,f_length,f_width,cohesion_radius,positions,velocities,p_end);
+            input('Check the plot, press Enter to continue');
+        end
+    end
 end
 Time=toc;
 
