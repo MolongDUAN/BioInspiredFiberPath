@@ -35,10 +35,15 @@ iteration_num = 300;
 
 % 0.5 Options
 GPU_flag=1;                 % 0 - off, 1 - on
-rule_flag=1;                % 0 - Boids, 1 - separation + field gradient
+rule_flag=2;                % 0 - Boids, 1 - separation + field gradient, 2 - field value
 plot_flag=0;                % 0 - no plot, 1 - plot field
 plot_iter=0;              % 0 - only plot initial field, other - plot field of that iteration
 plot_dis=0.02;              % the sampling point distance [mm]
+
+% 0.6 Rotation matrix
+R45 = [cos(pi/4), -sin(pi/4); sin(pi/4), cos(pi/4)];
+Rn45 = [cos(-pi/4), -sin(-pi/4); sin(-pi/4), cos(-pi/4)];
+R90 = [cos(pi/2), -sin(pi/2); sin(pi/2), cos(pi/2)];
 
 %% 1. Main
 % 1.0 Plot initial field
@@ -140,6 +145,29 @@ for t = 1:iteration_num
                 fieldGrad_p=-fieldGrad_n;
             else
                 fieldGrad_p=fieldGrad_n;
+            end
+            % obtain the change of the velocity
+            velocities_tmp(i, :) = -separation_weight*separation + fieldGrad_weight*fieldGrad_p;
+            
+        elseif rule_flag==2
+            fwp = calculate_points(R45, Rn45, R90, velocities(i, :), positions(i, :), max_speed);
+            pos_x=fwp(:,1)'/10;
+            pos_y=fwp(:,2)'/15;
+            pos_x(pos_x>1)=1;
+            pos_x(pos_x<0)=0;
+            pos_y(pos_y>1)=1;
+            pos_y(pos_y<0)=0;
+            field_value=zeros(1,5);
+            for j=1:5
+                [nrb_pnt,~]=nrbeval (surface, {pos_x(j),pos_y(j)});
+                field = computeFieldV(f_length, f_width, positions, velocities, p_end, positions(i, :), fwp(j,:), neighbors_e{i});
+                field_value(j)=nrb_pnt(3)*field;
+            end
+            if all(field_value==0)
+                fieldGrad_p=[0 0];
+            else
+                [~,fwp_index]=max(field_value);
+                fieldGrad_p=(fwp(fwp_index,:)-positions(i, :))/norm((fwp(fwp_index,:)-positions(i, :)));
             end
             % obtain the change of the velocity
             velocities_tmp(i, :) = -separation_weight*separation + fieldGrad_weight*fieldGrad_p;
@@ -272,6 +300,49 @@ function [field,grad] = computeField(f_length, f_width, positions, velocities, p
         end
     else
         grad=[0 0];
+        field=1;
+    end
+end
+
+% Forward search points fun
+function fwp = calculate_points(R45, Rn45, R90, velocities, positions, max_speed)
+
+v_norm=velocities/norm(velocities);
+fwp(1,:) = positions + max_speed .* v_norm;
+fwp(2,:) = positions + max_speed .* (R45 * v_norm')';
+fwp(3,:) = positions + max_speed .* (Rn45 * v_norm')';
+fwp(4,:) = positions + max_speed .* (R90 * v_norm')';
+fwp(5,:) = positions - max_speed .* (R90 * v_norm')';
+
+end
+
+% Field value fun
+function field = computeFieldV(f_length, f_width, positions, velocities, p_end, start_p, cal_p, neighbors)
+    % distance to center of ellipse
+    r_ellipse=zeros(length(neighbors),1);   % distance
+    
+    % only look forward
+    for i = 1:length(neighbors)
+        neighbor_index = neighbors(i);
+        if velocities(neighbor_index,:)*(p_end(neighbor_index, :)-start_p)'>0 % direction check
+            dis_a=norm(positions(neighbor_index, :)-cal_p); % distance to starting point
+            dis_b=norm(p_end(neighbor_index, :)-cal_p);     % distance to ending point
+            r_ellipse(i)=(dis_a+dis_b-f_length)/2;
+        end
+    end
+    % consider the fiber width (remove a circle area --> not ideal)
+    r_ellipse(r_ellipse<=f_width)=0;
+    r_ellipse(r_ellipse>f_width)=r_ellipse(r_ellipse>f_width)-f_width;
+    
+    % find neighbor particle with max grad
+    if ~isempty(neighbors)
+        r_ellipse(r_ellipse==0)=[]; % remove close particles
+        if ~isempty(r_ellipse)
+            field=prod(2*(1./(1+exp(-2.5*r_ellipse))-0.5));
+        else
+            field=0.01; % assume the field value will reduce to 1% on the particle
+        end
+    else
         field=1;
     end
 end
